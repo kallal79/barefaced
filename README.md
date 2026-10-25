@@ -5,10 +5,12 @@
 
 [![CI](https://github.com/kallal79/barefaced/actions/workflows/ci.yml/badge.svg)](https://github.com/kallal79/barefaced/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Netlify Status](https://api.netlify.com/api/v1/badges/deploy-status)](https://app.netlify.com/drop)
+[![Play Live on Netlify](https://img.shields.io/badge/🎮%20Play%20Live-guileless--manatee--3677be.netlify.app-1d7a6b?style=for-the-badge)](https://guileless-manatee-3677be.netlify.app)
 
 A real-time multiplayer bluffing party game for 2 to 8 players.  
 Join from any smartphone, tablet, or laptop with a 4-letter room code. No accounts, no installs, and no emojis.
+
+**👉 Play it live right now: [https://guileless-manatee-3677be.netlify.app](https://guileless-manatee-3677be.netlify.app)**
 
 <br />
 

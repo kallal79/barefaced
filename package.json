@@ -2,6 +2,7 @@
   "name": "barefaced",
   "private": true,
   "version": "2.0.0",
+  "homepage": "https://guileless-manatee-3677be.netlify.app",
   "type": "module",
   "scripts": {
     "dev": "vite",
