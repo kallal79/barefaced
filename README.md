@@ -10,7 +10,7 @@
 A real-time multiplayer bluffing party game for 2 to 8 players.  
 Join from any smartphone, tablet, or laptop with a 4-letter room code. No accounts, no installs, and no emojis.
 
-**👉 Play it live right now: [https://guileless-manatee-3677be.netlify.app](https://guileless-manatee-3677be.netlify.app)**
+** Play it live right now: [https://guileless-manatee-3677be.netlify.app](https://guileless-manatee-3677be.netlify.app)**
 
 <br />
 
@@ -20,7 +20,7 @@ Join from any smartphone, tablet, or laptop with a 4-letter room code. No accoun
 
 ---
 
-## 📖 What is Barefaced?
+##  What is Barefaced?
 
 **Barefaced** is a party game about bluffing, observation, and plausible deception inspired by tabletop favorites like *Balderdash* and *Fibbage*.
 
@@ -34,7 +34,7 @@ The trick? If you write a lie that sounds believable enough to fool your friends
 
 ---
 
-## 🎯 How It Works (The 3-Step Loop)
+##  How It Works (The 3-Step Loop)
 
 1. **Write (50s / 45s / 40s)**: A real fact appears with a blank (e.g., *"The very first item ever sold on eBay was a broken ______"*). Players type a convincing lie. A built-in fuzzy matching engine rejects submissions that match or closely resemble the truth.
 2. **Vote (25s)**: All player lies, house decoys, and the true answer are shuffled together. Players vote on which option they believe is real. You cannot vote for your own lie. If two players invent the same lie, they are merged into one option and both earn points!
@@ -53,7 +53,7 @@ The trick? If you write a lie that sounds believable enough to fool your friends
 
 ---
 
-## ⚡ Technical Highlights
+##  Technical Highlights
 
 - **Serverless Real-Time Multiplayer**: Built with a standard Netlify Function at `netlify/functions/game.ts` called directly at `/.netlify/functions/game`.
 - **Strong Consistency & Optimistic Concurrency**: Uses `@netlify/blobs` with `consistency: 'strong'` and HTTP ETag conditional writes (`onlyIfMatch` / `onlyIfNew`). If two players submit an action at the exact same millisecond, the loser automatically retries against the latest room snapshot, preventing lost updates.
@@ -64,7 +64,7 @@ The trick? If you write a lie that sounds believable enough to fool your friends
 
 ---
 
-## 📱 Screenshots
+##  Screenshots
 
 <div align="center">
   <img src="./docs/screenshots/home-mobile.png" alt="Mobile Home Screen" width="280" />
@@ -74,7 +74,7 @@ The trick? If you write a lie that sounds believable enough to fool your friends
 
 ---
 
-## 🚀 Getting Started Locally
+##  Getting Started Locally
 
 ### Prerequisites
 - Node.js 18+ (tested on Node 22 & 26)
@@ -103,22 +103,6 @@ Runs the 17-point automated end-to-end test suite covering prompt pools, fuzzy a
 ```bash
 npm run build
 ```
-
----
-
-## ☁️ Deployment
-
-### Option A: Netlify Drop (Zero Setup)
-1. Run `npm run package` (or use the pre-generated `netlify-ready-game.zip`).
-2. Go to [https://app.netlify.com/drop](https://app.netlify.com/drop).
-3. Drag and drop `netlify-ready-game.zip`.
-4. Netlify will publish your game live with a public URL in seconds.
-
-### Option B: Netlify CLI / Git Connection
-Connect your GitHub repository to Netlify:
-- **Build command**: `npm run build`
-- **Publish directory**: `dist`
-- **Functions directory**: `netlify/functions`
 
 ---
 
