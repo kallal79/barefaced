@@ -1,0 +1,6 @@
+node_modules
+dist
+.stage
+*.log
+.netlify
+netlify-ready-game.zip
