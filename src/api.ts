@@ -1,3 +1,4 @@
+import { handleAction } from '../lib/engine';
 import type { ApiResult, Payload } from '../lib/types';
 
 const ENDPOINT = '/.netlify/functions/game';
@@ -22,18 +23,37 @@ export async function send(payload: Payload): Promise<Reply> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+    if (res.status === 404) {
+      const local = await handleAction(payload);
+      return { ...local.body, status: local.status };
+    }
     return await parse(res);
   } catch {
-    return { ok: false, error: 'Cannot reach the game server. Check your connection.', status: 0 };
+    try {
+      const local = await handleAction(payload);
+      return { ...local.body, status: local.status };
+    } catch {
+      return { ok: false, error: 'Cannot reach the game server. Check your connection.', status: 0 };
+    }
   }
 }
 
 export async function poll(code: string, playerId: string): Promise<Reply> {
   try {
     const q = new URLSearchParams({ action: 'state', code, playerId });
-    return await parse(await fetch(`${ENDPOINT}?${q}`, { cache: 'no-store' }));
+    const res = await fetch(`${ENDPOINT}?${q}`, { cache: 'no-store' });
+    if (res.status === 404) {
+      const local = await handleAction({ action: 'state', code, playerId });
+      return { ...local.body, status: local.status };
+    }
+    return await parse(res);
   } catch {
-    return { ok: false, error: 'offline', status: 0 };
+    try {
+      const local = await handleAction({ action: 'state', code, playerId });
+      return { ...local.body, status: local.status };
+    } catch {
+      return { ok: false, error: 'offline', status: 0 };
+    }
   }
 }
 
