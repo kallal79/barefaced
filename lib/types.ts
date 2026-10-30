@@ -1,5 +1,26 @@
 export type Phase = 'LOBBY' | 'WRITE' | 'VOTE' | 'REVEAL' | 'FINAL';
 
+export type GameMode = 'classic' | 'blitz' | 'infinity';
+
+export type MatchLength = 'quick' | 'standard' | 'marathon';
+
+export type DeckCategory = 'all' | 'history' | 'pop' | 'nature' | 'science';
+
+export interface TopLieRecord {
+  promptText: string;
+  lieText: string;
+  authorId: string;
+  authorName: string;
+  votesCount: number;
+}
+
+export interface GameModifiers {
+  chaos?: boolean;
+  speedDemon?: boolean;
+  doubleDecoy?: boolean;
+  anonymity?: boolean;
+}
+
 export interface Prompt {
   round: number;
   /** Contains a ______ blank that players fill in. */
@@ -11,6 +32,7 @@ export interface Prompt {
   decoys: string[];
   /** Short explanation shown after the reveal. */
   note: string;
+  category?: DeckCategory;
 }
 
 export interface Player {
@@ -28,6 +50,19 @@ export interface Player {
   gain: number;
   gainTruth: number;
   gainFooled: number;
+  isBot?: boolean;
+  doubleDown?: boolean;
+  streak: number;
+  likesReceived: number;
+  doubleDownHits: number;
+  radarUsed?: boolean;
+  avatar?: string;
+  lives?: number;
+  shieldUsed?: boolean;
+  shieldActive?: boolean;
+  trapUsed?: boolean;
+  trapActive?: boolean;
+  title?: string;
 }
 
 export interface Option {
@@ -36,6 +71,16 @@ export interface Option {
   kind: 'truth' | 'lie' | 'house';
   authors: string[];
   voters: string[];
+  likes?: string[];
+  trapped?: boolean;
+}
+
+export interface Reaction {
+  id: string;
+  playerId: string;
+  playerName: string;
+  emoji: string;
+  createdAt: number;
 }
 
 export interface Room {
@@ -47,10 +92,16 @@ export interface Room {
   players: Record<string, Player>;
   order: string[];
   options: Option[];
+  reactions?: Reaction[];
   deadline: number;
   version: number;
   createdAt: number;
   updatedAt: number;
+  gameMode?: GameMode;
+  matchLength?: MatchLength;
+  modifiers?: GameModifiers;
+  deckCategory?: DeckCategory;
+  topLies?: TopLieRecord[];
 }
 
 /* ---------- what the browser is allowed to see ---------- */
@@ -61,11 +112,21 @@ export interface PublicPlayer {
   color: number;
   score: number;
   isHost: boolean;
+  isBot?: boolean;
   submitted: boolean;
   voted: boolean;
   gain: number;
   gainTruth: number;
   gainFooled: number;
+  doubleDown?: boolean;
+  streak?: number;
+  likesReceived?: number;
+  radarUsed?: boolean;
+  avatar?: string;
+  lives?: number;
+  shieldUsed?: boolean;
+  trapUsed?: boolean;
+  title?: string;
 }
 
 export interface PublicOption {
@@ -77,6 +138,9 @@ export interface PublicOption {
   kind?: 'truth' | 'lie' | 'house';
   authors?: string[];
   voters?: string[];
+  likes?: string[];
+  likedByMe?: boolean;
+  trapped?: boolean;
 }
 
 export interface Award {
@@ -102,11 +166,26 @@ export interface ClientState {
   players: PublicPlayer[];
   prompt?: string;
   options?: PublicOption[];
+  reactions?: Reaction[];
   myLie?: string | null;
   myVote?: string | null;
+  myDoubleDown?: boolean;
+  myRadarUsed?: boolean;
+  myLives?: number;
+  myShieldUsed?: boolean;
+  myShieldActive?: boolean;
+  myTrapUsed?: boolean;
+  myTrapActive?: boolean;
+  streak?: number;
   truth?: string;
   note?: string;
   awards?: Award[];
+  gameMode?: GameMode;
+  matchLength?: MatchLength;
+  modifiers?: GameModifiers;
+  deckCategory?: DeckCategory;
+  topLies?: TopLieRecord[];
+  infinityLevel?: number;
 }
 
 export interface Payload {
@@ -116,6 +195,18 @@ export interface Payload {
   name?: string;
   text?: string;
   optionId?: string;
+  emoji?: string;
+  doubleDown?: boolean;
+  likeOptionId?: string;
+  useRadar?: boolean;
+  avatar?: string;
+  gameMode?: GameMode;
+  matchLength?: MatchLength;
+  deckCategory?: DeckCategory;
+  modifierKey?: keyof GameModifiers;
+  modifierVal?: boolean;
+  useShield?: boolean;
+  plantTrap?: boolean;
 }
 
 export interface ApiResult {
@@ -123,4 +214,5 @@ export interface ApiResult {
   error?: string;
   playerId?: string;
   state?: ClientState;
+  suggestedLie?: string;
 }
