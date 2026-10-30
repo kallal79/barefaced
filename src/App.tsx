@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ClientState, Payload } from '../lib/types';
 import { loadSeat, poll, saveSeat, send, type Seat } from './api';
-import { sound } from './audio';
+import { sound, speech } from './audio';
 import { Final, Home, Lobby, Reveal, Rules, Vote, Write, type Ctx } from './screens';
+import { HostessBanner, HostessChatDrawer, ReactionsOverlay, StudioSoundboardModal } from './ui';
 
 function useSecondsLeft(deadline: number, offset: number) {
   const [secs, setSecs] = useState(0);
@@ -24,7 +25,32 @@ export default function App() {
   const [toast, setToast] = useState('');
   const [rules, setRules] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
+  const [voiceOn, setVoiceOn] = useState(sound.voiceEnabled);
+  const [bgmOn, setBgmOn] = useState(sound.bgmEnabled);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [soundboardOpen, setSoundboardOpen] = useState(false);
   const invite = new URLSearchParams(window.location.search).get('room')?.toUpperCase().replace(/[^A-Z]/g, '') ?? '';
+
+  /* Automatic studio hostess welcome greeting on opening game */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      speech.welcome();
+    }, 600);
+
+    const onFirstUserAction = () => {
+      speech.welcome();
+      if (sound.bgmEnabled) sound.startBgm();
+    };
+
+    window.addEventListener('pointerdown', onFirstUserAction, { once: true });
+    window.addEventListener('keydown', onFirstUserAction, { once: true });
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('pointerdown', onFirstUserAction);
+      window.removeEventListener('keydown', onFirstUserAction);
+    };
+  }, []);
 
   const flash = useCallback((msg: string) => {
     setToast(msg);
@@ -104,6 +130,29 @@ export default function App() {
     setSeat(next);
   };
 
+  const soloCreate = async (name: string) => {
+    sound.click();
+    setBusy(true);
+    const r = await send({ action: 'create', name: name || 'Player 1' });
+    if (!r.ok || !r.playerId || !r.state) {
+      setBusy(false);
+      return flash(r.error || 'Something went wrong.');
+    }
+    const next = { code: r.state.code, playerId: r.playerId };
+    saveSeat(next);
+    localStorage.setItem('barefaced.name', name ?? '');
+    window.history.replaceState({}, '', window.location.pathname);
+    setSeat(next);
+    setOffset(r.state.serverTime - Date.now());
+
+    // Add 2 bots automatically for instant playability
+    await send({ action: 'addBot', code: r.state.code, playerId: r.playerId });
+    const r2 = await send({ action: 'addBot', code: r.state.code, playerId: r.playerId });
+    setBusy(false);
+    if (r2.ok && r2.state) setState(r2.state);
+    else setState(r.state);
+  };
+
   const act: Ctx['act'] = async (p, quiet) => {
     if (!seat) return { ok: false };
     const r = await send({ ...p, code: seat.code, playerId: seat.playerId } as Payload);
@@ -112,7 +161,15 @@ export default function App() {
     return r;
   };
 
-  const toggleSound = () => setSoundOn(sound.toggle());
+  const toggleSound = () => {
+    const sOn = sound.toggle();
+    setSoundOn(sOn);
+  };
+
+  const toggleVoice = () => {
+    const vOn = sound.toggleVoice();
+    setVoiceOn(vOn);
+  };
 
   const leaveClick = async () => {
     if (!state) return;
@@ -139,8 +196,30 @@ export default function App() {
           <button className="linkbtn" onClick={() => setRules(true)}>
             Rules
           </button>
+          <button
+            type="button"
+            className="linkbtn soundboard-nav-btn"
+            onClick={() => {
+              sound.click();
+              setSoundboardOpen(true);
+            }}
+            title="Open Studio Soundboard & Broadcast Audio Console"
+          >
+            📻 Soundboard
+          </button>
           <button className="linkbtn" onClick={toggleSound} aria-pressed={soundOn}>
             Sound {soundOn ? 'on' : 'off'}
+          </button>
+          <button
+            className="linkbtn"
+            onClick={() => {
+              const next = sound.toggleBgm();
+              setBgmOn(next);
+            }}
+            aria-pressed={bgmOn}
+            title="Toggle TV Studio Lounge Groove background music"
+          >
+            Music {bgmOn ? 'on' : 'off'}
           </button>
           {state && (
             <button className="linkbtn" onClick={leaveClick}>
@@ -150,6 +229,9 @@ export default function App() {
         </nav>
       </header>
 
+      {/* Hostess commentary banner */}
+      <HostessBanner phase={state ? state.phase : 'LOBBY'} onOpenChat={() => setChatOpen(true)} />
+
       <main className="stage">
         {!ctx && !seat && (
           <Home
@@ -157,6 +239,7 @@ export default function App() {
             busy={busy}
             initialName={localStorage.getItem('barefaced.name') ?? ''}
             onCreate={(name) => enter({ action: 'create', name })}
+            onSolo={(name) => soloCreate(name)}
             onJoin={(name, code) => enter({ action: 'join', name, code })}
             onRules={() => setRules(true)}
           />
@@ -168,6 +251,48 @@ export default function App() {
         {ctx && ctx.s.phase === 'REVEAL' && <Reveal key={key} {...ctx} />}
         {ctx && ctx.s.phase === 'FINAL' && <Final {...ctx} />}
       </main>
+
+      <ReactionsOverlay reactions={state?.reactions} />
+
+      {/* Floating Hostess Assistant trigger */}
+      <button
+        type="button"
+        className="floating-hostess-btn"
+        title="Chat with Roxy (Studio Hostess)"
+        onClick={() => {
+          sound.hostessVoice();
+          setChatOpen(true);
+        }}
+      >
+        <span className="fh-avatar">💁‍♀️</span>
+        <span className="fh-label">Ask Roxy</span>
+      </button>
+
+      <HostessChatDrawer
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        phase={state ? state.phase : 'LOBBY'}
+      />
+
+      <StudioSoundboardModal
+        isOpen={soundboardOpen}
+        onClose={() => setSoundboardOpen(false)}
+        bgmOn={bgmOn}
+        soundOn={soundOn}
+        voiceOn={voiceOn}
+        onToggleBgm={() => {
+          const next = sound.toggleBgm();
+          setBgmOn(next);
+        }}
+        onToggleSound={() => {
+          const next = sound.toggle();
+          setSoundOn(next);
+        }}
+        onToggleVoice={() => {
+          const next = sound.toggleVoice();
+          setVoiceOn(next);
+        }}
+      />
 
       {toast && (
         <div className="toast" role="alert" onClick={() => setToast('')}>
