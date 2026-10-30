@@ -5,6 +5,7 @@
   "homepage": "https://guileless-manatee-3677be.netlify.app",
   "type": "module",
   "scripts": {
+    "start": "vite --host 0.0.0.0",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
