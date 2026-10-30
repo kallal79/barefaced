@@ -92,6 +92,20 @@ export default function App() {
     };
   }, [seat, apply, leave]);
 
+  /* Immediate multi-tab sync when playing on static hosts */
+  useEffect(() => {
+    if (!seat || typeof BroadcastChannel === 'undefined') return;
+    const bc = new BroadcastChannel('barefaced.sync');
+    bc.onmessage = (e) => {
+      if (e.data && e.data.code === seat.code) {
+        poll(seat.code, seat.playerId).then((r) => {
+          if (r.ok && r.state) apply(r.state);
+        });
+      }
+    };
+    return () => bc.close();
+  }, [seat, apply]);
+
   /* sounds on phase changes */
   const lastPhase = useRef('');
   useEffect(() => {

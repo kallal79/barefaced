@@ -46,6 +46,15 @@ async function load(code: string): Promise<Loaded | null> {
     if (!hit) return null;
     return { room: hit.data as Room, etag: hit.etag as string };
   }
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const raw = localStorage.getItem(`barefaced.room.${code}`);
+      if (raw) {
+        const item = JSON.parse(raw);
+        return { room: item.room, etag: String(item.etag) };
+      }
+    } catch {}
+  }
   const m = memory.get(code);
   return m ? { room: JSON.parse(m.json), etag: String(m.etag) } : null;
 }
@@ -55,6 +64,23 @@ async function write(room: Room, etag: string | null): Promise<boolean> {
   if (store) {
     const res = await store.setJSON(room.code, room, etag ? { onlyIfMatch: etag } : { onlyIfNew: true });
     return res.modified;
+  }
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const key = `barefaced.room.${room.code}`;
+      const raw = localStorage.getItem(key);
+      const current = raw ? JSON.parse(raw) : null;
+      const currentEtag = current ? String(current.etag) : null;
+      if (etag === null ? !!current : currentEtag !== etag) return false;
+      const nextEtag = (current ? current.etag : 0) + 1;
+      localStorage.setItem(key, JSON.stringify({ room, etag: nextEtag }));
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('barefaced.sync');
+        bc.postMessage({ code: room.code, version: room.version });
+        bc.close();
+      }
+      return true;
+    } catch {}
   }
   const m = memory.get(room.code);
   if (etag === null ? !!m : !m || String(m.etag) !== etag) return false;

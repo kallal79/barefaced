@@ -6,9 +6,16 @@ import type { Payload } from '../../lib/types';
 const HEADERS = {
   'Content-Type': 'application/json',
   'Cache-Control': 'no-store',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
 };
 
 export default async (req: Request): Promise<Response> => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: HEADERS });
+  }
+
   let payload: Payload;
   try {
     if (req.method === 'POST') {
@@ -16,7 +23,7 @@ export default async (req: Request): Promise<Response> => {
     } else {
       const q = new URL(req.url).searchParams;
       payload = {
-        action: q.get('action') || 'state',
+        action: (q.get('action') as any) || 'state',
         code: q.get('code') || undefined,
         playerId: q.get('playerId') || undefined,
       };
