@@ -50,6 +50,7 @@ function devFunction(): Plugin {
 }
 
 export default defineConfig({
+  base: './',
   plugins: [react(), devFunction()],
   server: {
     port: Number(process.env.PORT) || 5173,
