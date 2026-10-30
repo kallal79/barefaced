@@ -5,7 +5,7 @@ function getEndpoint(): string {
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (host.includes('github.io') || host.includes('glitch.me')) {
-      return 'https://guileless-manatee-3677be.netlify.app/.netlify/functions/game';
+      return 'https://barefaced-kallal.netlify.app/.netlify/functions/game';
     }
   }
   return '/.netlify/functions/game';
