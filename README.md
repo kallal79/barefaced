@@ -41,11 +41,17 @@ The trick? If you write a lie that sounds believable enough to fool your friends
 3. **Score & Reveal**:
    - **Finding the Truth**: Awards **+1,000 points**.
    - **Fooling Opponents**: Awards **+500 points** for each player who fell for your lie.
-4. **3 Escalating Rounds**:
-   - **Round 1 (3 prompts)**: 1x point multiplier.
-   - **Round 2 (3 prompts)**: 2x point multiplier with stranger facts.
-   - **Round 3 (3 prompts)**: 3x point multiplier with fewer decoys and high stakes.
-5. **End-of-Game Awards**: Celebrates top performers with honors like **Best Liar**, **Lie Detector**, and **Easiest Mark**.
+4. **3 Escalating Rounds & Match Length Presets**:
+   - **Match Lengths**: Quick Sprint (1 Round • 3 Prompts), Standard Show (3 Rounds • 9 Prompts), or Marathon (5 Rounds • 15 Prompts).
+   - **Round 1**: 1x point multiplier.
+   - **Round 2**: 2x point multiplier with stranger facts and Double Down wagers.
+   - **Round 3**: 3x point multiplier with fewer decoys and high-stakes showdown.
+5. **Tactical Lifelines & Studio Soundboard**:
+   - **Truth Shield**: Protects against losing points when tricked by rival bluffs.
+   - **Bluff Trap**: Rig your own lie to steal bonus points from unsuspecting players.
+   - **50/50 Lie Radar**: Sweeps the board to eliminate 50% of false answers.
+   - **Studio Soundboard**: Instant live reaction SFX pads (Airhorn, Rimshot, Applause, Ka-Ching, Crickets, Drama Sting, Cheer).
+6. **End-of-Game Awards & 3D Podium**: Celebrates top performers with Olympic podium, dynamic player titles (e.g. *Master Bamboozler*, *Eagle-Eye Detective*), and the **Hall of Deception**.
 
 <div align="center">
   <img src="./docs/screenshots/reveal-screen.png" alt="Barefaced Reveal Screen" width="700" />
@@ -53,18 +59,18 @@ The trick? If you write a lie that sounds believable enough to fool your friends
 
 ---
 
-##  Technical Highlights
+## 🛠️ Technical Highlights
 
 - **Serverless Real-Time Multiplayer**: Built with a standard Netlify Function at `netlify/functions/game.ts` called directly at `/.netlify/functions/game`.
 - **Strong Consistency & Optimistic Concurrency**: Uses `@netlify/blobs` with `consistency: 'strong'` and HTTP ETag conditional writes (`onlyIfMatch` / `onlyIfNew`). If two players submit an action at the exact same millisecond, the loser automatically retries against the latest room snapshot, preventing lost updates.
 - **Offline / Local Dev Fallback**: When running outside of Netlify, an in-memory store mimics identical ETag concurrency semantics, so developers can test locally with zero API keys or database setup.
 - **Anti-Cheat Data Masking**: The answer key and question notes are concealed server-side during the write and vote phases. Even inspecting client network packets reveals no clues.
-- **Web Audio Synthesizer**: Pure Web Audio API sound effects (paper clicks, answer locks, tick blips, fanfares) that require zero external MP3/WAV assets.
-- **Tactile Paper Aesthetic**: Custom editorial design using `Bricolage Grotesque`, `DM Sans`, and `DM Mono` with offset shadows, warm cream tones, and colored initial badges instead of emojis.
+- **Web Audio Synthesizer & Soundboard**: Pure Web Audio API sound effects, procedural lounge music, and hostess speech synthesis that require zero external audio assets.
+- **Tactile Paper Aesthetic**: Custom editorial design using `Bricolage Grotesque`, `DM Sans`, and `DM Mono` with offset shadows, warm cream tones, and colored initial badges.
 
 ---
 
-##  Screenshots
+## 📸 Screenshots
 
 <div align="center">
   <img src="./docs/screenshots/home-mobile.png" alt="Mobile Home Screen" width="280" />
@@ -74,7 +80,7 @@ The trick? If you write a lie that sounds believable enough to fool your friends
 
 ---
 
-##  Getting Started Locally
+## 🚀 Getting Started Locally
 
 ### Prerequisites
 - Node.js 18+ (tested on Node 22 & 26)
@@ -97,7 +103,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser. Open a seco
 ```bash
 npm test
 ```
-Runs the 17-point automated end-to-end test suite covering prompt pools, fuzzy answer normalization, concurrency, 3-round scoring, and timer auto-progression.
+Runs the 20-point automated end-to-end test suite covering prompt pools, fuzzy answer normalization, concurrency, 3-round scoring, match length presets, tactical lifelines, and timer auto-progression.
 
 ### Production Build
 ```bash

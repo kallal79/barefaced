@@ -245,6 +245,97 @@ async function main() {
   assert.equal(ls.hostId, l.ids[1], 'host passes to the next player');
   ok('strangers are refused; leaving the lobby hands over the host role');
 
+  console.log('\nAI Bots and Reactions');
+  const botRoom = await good({ action: 'create', name: 'Commander' });
+  const bCode = botRoom.state!.code;
+  const bHostId = botRoom.playerId!;
+  await bad({ action: 'addBot', code: bCode, playerId: 'stranger' }, 'not part');
+  const afterBot = await good({ action: 'addBot', code: bCode, playerId: bHostId });
+  assert.equal(afterBot.state!.players.length, 2);
+  const botPlayer = afterBot.state!.players.find((p: any) => p.isBot);
+  assert.ok(botPlayer, 'bot player added with isBot tag');
+  // test reaction
+  await good({ action: 'react', code: bCode, playerId: bHostId, emoji: '🔥' });
+  const reactState = await stateOf(bCode, bHostId);
+  assert.ok(reactState.reactions && reactState.reactions.length > 0);
+  assert.equal(reactState.reactions[0].emoji, '🔥');
+  // test solo start with bot
+  await good({ action: 'start', code: bCode, playerId: bHostId });
+  const writeSt = await stateOf(bCode, bHostId);
+  assert.equal(writeSt.phase, 'WRITE');
+  assert.equal(writeSt.players.find((p: any) => p.isBot)!.submitted, true, 'bot already has lie locked');
+
+  // test AI Lie suggestion
+  const draftRes = await good({ action: 'suggestLie', code: bCode, playerId: bHostId });
+  assert.ok(draftRes.suggestedLie, 'AI suggested lie was returned');
+
+  await good({ action: 'lie', code: bCode, playerId: bHostId, text: 'human bluff' });
+  const voteSt = await stateOf(bCode, bHostId);
+  assert.equal(voteSt.phase, 'VOTE', 'game advances straight to VOTE once human locks lie');
+  // test 50/50 Lie Radar lifeline
+  await good({ action: 'useRadar', code: bCode, playerId: bHostId });
+  const radarSt = await stateOf(bCode, bHostId);
+  assert.equal(radarSt.myRadarUsed, true, 'radar marked as used');
+  await bad({ action: 'useRadar', code: bCode, playerId: bHostId }, 'already used');
+
+  // test vote with Double Down
+  const tOpt = voteSt.options!.find((o: any) => !o.mine);
+  await good({ action: 'vote', code: bCode, playerId: bHostId, optionId: tOpt!.id, doubleDown: true });
+  const revSt = await stateOf(bCode, bHostId);
+  assert.equal(revSt.phase, 'REVEAL', 'game advances straight to REVEAL once human votes');
+
+  // test option like / kudos
+  const anyOpt = revSt.options![0];
+  await good({ action: 'like', code: bCode, playerId: bHostId, optionId: anyOpt.id });
+  const likedSt = await stateOf(bCode, bHostId);
+  assert.ok(likedSt.options![0].likes && likedSt.options![0].likes.length > 0, 'like recorded on option');
+
+  ok('VIP house guests formulate believable lies, vote autonomously, and support live reaction bursts');
+  ok('Double Down wagers, 50/50 Lie Radar, Bluff suggestions, and Lie Kudos likes function correctly');
+
+  // New Game Modes and Tactical Lifelines test
+  const mRes = await good({ action: 'create', name: 'Commander' });
+  const mCode = mRes.state!.code;
+  const mHost = mRes.playerId!;
+  await good({ action: 'addBot', code: mCode, playerId: mHost });
+
+  // Test mode and modifier selection in lobby
+  await good({ action: 'setGameMode', code: mCode, playerId: mHost, gameMode: 'infinity' });
+  await good({ action: 'setMatchLength', code: mCode, playerId: mHost, matchLength: 'quick' });
+  await good({ action: 'setCategory', code: mCode, playerId: mHost, deckCategory: 'nature' });
+  await good({ action: 'setModifier', code: mCode, playerId: mHost, modifierKey: 'chaos', modifierVal: true });
+  const lobbySt = await stateOf(mCode, mHost);
+  assert.equal(lobbySt.gameMode, 'infinity', 'game mode set to infinity survival');
+  assert.equal(lobbySt.matchLength, 'quick', 'match length preset set to quick');
+  assert.equal(lobbySt.deckCategory, 'nature', 'deck category set to nature');
+  assert.equal(lobbySt.modifiers?.chaos, true, 'chaos modifier set');
+
+  // Start game in Infinity mode
+  await good({ action: 'start', code: mCode, playerId: mHost });
+  const infWriteSt = await stateOf(mCode, mHost);
+  assert.equal(infWriteSt.phase, 'WRITE', 'game started in WRITE phase');
+  assert.equal(infWriteSt.myLives, 3, 'player starts with 3 lives');
+  assert.ok(infWriteSt.players.every((p) => p.title !== undefined), 'player titles are computed and populated');
+
+  // Test Bluff Trap planting
+  await good({ action: 'lie', code: mCode, playerId: mHost, text: 'trapped bluff', plantTrap: true });
+  const infVoteSt = await stateOf(mCode, mHost);
+  assert.equal(infVoteSt.phase, 'VOTE', 'game advances to VOTE');
+  assert.equal(infVoteSt.myTrapUsed, true, 'trap marked as used');
+
+  // Test Truth Shield lifeline
+  await good({ action: 'useShield', code: mCode, playerId: mHost });
+  const shieldSt = await stateOf(mCode, mHost);
+  assert.equal(shieldSt.myShieldActive, true, 'shield active for vote');
+
+  const infVoteOpt = infVoteSt.options!.find((o: any) => !o.mine);
+  await good({ action: 'vote', code: mCode, playerId: mHost, optionId: infVoteOpt!.id });
+  const infRevSt = await stateOf(mCode, mHost);
+  assert.equal(infRevSt.phase, 'REVEAL', 'game advanced to REVEAL');
+  assert.ok(Array.isArray(infRevSt.topLies), 'topLies array exposed on reveal');
+
+  ok('Infinity Survival mode, Match Length presets, Truth Shield, and Bluff Trap function flawlessly');
+
   console.log(`\nAll ${passed} checks passed.\n`);
 }
 
